@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
+from .api import RhinoDeviceState
 from .const import DOMAIN
 from .coordinator import RhinoDeviceCoordinator
 
@@ -57,12 +58,37 @@ class RhinoLightEntity(LightEntity, CoordinatorEntity[RhinoDeviceCoordinator]):
         self._attr_unique_id = f"rhino_light_{device_id}"
 
         # Initialize state from coordinator data if available
-        device_data = self.coordinator.data.get(self._device_id, {})
-        self._attr_is_on = device_data.online
-        self._attr_brightness = device_data.data.get("brightness", 0)
+        device_state: RhinoDeviceState = self.coordinator.data.get(self._device_id, {})
+        device_data = device_state.data if device_state else {}
+        self._attr_is_on = device_state.online & device_data.get("is_on", False)
+        self._attr_brightness = device_data.get("brightness", 0)
+        self._attr_rgb_color = device_data.get("rgb_color", None)
+        self._attr_color_mode = (
+            ColorMode.RGB
+            if device_data.get("rgb_color", None)
+            else ColorMode.BRIGHTNESS
+        )
 
-        # Set device info
-        self._attr_device_info = device_data
+    @property
+    def brightness(self) -> int:
+        """Return the brightness of the light."""
+        return self._attr_brightness
+
+    @property
+    def is_on(self) -> bool:
+        """Return true if light is on."""
+        return self._attr_is_on
+
+    @property
+    def rgb_color(self) -> tuple[float, float, float] | None:
+        """HS color of the light."""
+        if self._device_control.can_set_color:
+            hsbxy = self._device_data.hsb_xy_color
+            hue = hsbxy[0] / (self._device_control.max_hue / 360)
+            sat = hsbxy[1] / (self._device_control.max_saturation / 100)
+            if hue is not None and sat is not None:
+                return hue, sat
+        return None
 
     @callback
     def _handle_coordinator_update(self) -> None:
@@ -70,14 +96,15 @@ class RhinoLightEntity(LightEntity, CoordinatorEntity[RhinoDeviceCoordinator]):
         if self._device_id not in self.coordinator.data:
             return
 
-        device_data = self.coordinator.data[self._device_id]
-        self._attr_is_on = device_data.get("state", self._attr_is_on)
-        self._attr_brightness = device_data.get("brightness", self._attr_brightness)
+        device_state: RhinoDeviceState = self.coordinator.data.get(self._device_id, {})
+        device_data = device_state.data if device_state else {}
+        self._attr_is_on = device_state.online & device_data.get("is_on", False)
+        self._attr_brightness = device_data.get("brightness", self.brightness)
         self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
-        brightness = kwargs.get(ATTR_BRIGHTNESS)
+        brightness = kwargs.get(ATTR_BRIGHTNESS) | self.brightness
 
         # Call API to turn on the device
         await self.coordinator.api.turn_on(self._device_id, brightness=brightness)
