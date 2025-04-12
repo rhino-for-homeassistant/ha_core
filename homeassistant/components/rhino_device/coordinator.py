@@ -1,10 +1,9 @@
 """Coordinator for Rhino Devices."""
 
+import asyncio
 from datetime import timedelta
 import logging
 from typing import Any
-
-import async_timeout
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -53,7 +52,7 @@ class RhinoDeviceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from API endpoint."""
         try:
-            async with async_timeout.timeout(10):
+            async with asyncio.timeout(10):
                 # If we haven't loaded devices yet, do so now
                 if not self.devices:
                     self.devices = await self.api.get_devices()
@@ -65,8 +64,8 @@ class RhinoDeviceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
                 if not self.data:
                     return await self.api.get_initial_data()
 
-                updated_data = await self.api.update(current_data=self.data)
-                return updated_data
+                return await self.api.update(current_data=self.data)
+
         except Exception as err:
             _LOGGER.debug("Error fetching data from API: %s", err)
             raise UpdateFailed("Error communicating with API") from err

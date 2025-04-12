@@ -77,7 +77,7 @@ class TradfriLight(TradfriBaseEntity, LightEntity):
         # Calculate supported color modes
         modes: set[ColorMode] = {ColorMode.ONOFF}
         if self._device.light_control.can_set_color:
-            modes.add(ColorMode.HS)
+            modes.add(ColorMode.H)
         if self._device.light_control.can_set_temp:
             modes.add(ColorMode.COLOR_TEMP)
         if self._device.light_control.can_set_dimmer:

@@ -52,7 +52,6 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
     """Set up the Rhino device component from YAML configuration."""
     if DOMAIN not in config:
         return True
-
     domain_config = config[DOMAIN]
     _LOGGER.warning(f"Domain config: {domain_config}")
     hass.data.setdefault(DOMAIN, {})
@@ -69,7 +68,10 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         # Create coordinator for YAML config
         # Create coordinator for YAML config
         coordinator = RhinoDeviceCoordinator(hass, None, my_api)
-        await coordinator.async_config_entry_first_refresh()
+
+        print("Setup coordinator -- awaiting async refresh")
+        await coordinator.async_refresh()
+        print("Finished async refresh")
         hass.data[DOMAIN]["coordinator"] = coordinator
 
         # Register cleanup when Home Assistant stops
