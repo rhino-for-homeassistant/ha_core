@@ -24,3 +24,13 @@ class RhinoDeviceHub:
         """Get the device information."""
         # Placeholder for getting device information
         return {"device": "Rhino"}
+
+    async def get_initial_data(self):
+        """Get the initial data from the device."""
+        # Placeholder for getting initial data
+        return {"initial_data": "Rhino"}
+
+    async def update(self, current_data):
+        """Update the device data."""
+        # Placeholder for updating device data
+        return {"updated_data": "Rhino"}

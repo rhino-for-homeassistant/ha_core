@@ -29,6 +29,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: RhinoConfigEntry) -> boo
     # TODO 3. Store an API object for your platforms to access
     entry.runtime_data = my_api
 
+    # This creates each HA object for each platform your device requires.
+    # It's done by calling the `async_setup_entry` function in each platform module.
     await hass.config_entries.async_forward_entry_setups(entry, _PLATFORMS)
 
     return True
@@ -37,4 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: RhinoConfigEntry) -> boo
 # TODO Update entry annotation
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Unload a config entry."""
+    # This is called when an entry/configured device is to be removed. The class
+    # needs to unload itself, and remove callbacks. See the classes for further
+    # details
     return await hass.config_entries.async_unload_platforms(entry, _PLATFORMS)
