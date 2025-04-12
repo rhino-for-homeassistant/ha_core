@@ -1,10 +1,13 @@
-"""Coordinator for Rhino Devices"""
+"""Coordinator for Rhino Devices."""
 
 from datetime import timedelta
 import logging
+from typing import Any
 
 import async_timeout
 
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .api import RhinoDeviceHub
@@ -12,35 +15,28 @@ from .api import RhinoDeviceHub
 _LOGGER = logging.getLogger(__name__)
 
 
-# async def async_setup_entry(hass, config_entry, async_add_entities):
-#     """Set up the coordinator for the Rhino Device."""
-#     # We're assuming that the API object is stored in the config entry.
-#     # I think this is set up in __init__.
-#     my_api: RhinoDeviceHub = hass.data[DOMAIN][config_entry.entry_id]
-#     coordinator = RhinoDeviceCoordinator(hass, config_entry)
-
-#     # Fetch initial data so we have data when entities subscribe
-#     await coordinator.async_config_entry_first_refresh()
-#     async_add_entities(
-#         RhinoDeviceEntity(coordinator, idx) for idx, ent in enumerate(coordinator.data)
-#     )
-
-
-class RhinoDeviceCoordinator(DataUpdateCoordinator):
+class RhinoDeviceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
     """Coordinator for the Rhino Device."""
 
-    def __init__(self, hass, config_entry, my_api):
+    def __init__(
+        self,
+        hass: HomeAssistant,
+        config_entry: ConfigEntry | None,
+        my_api: RhinoDeviceHub,
+    ) -> None:
         """Initialize the coordinator."""
         super().__init__(
             hass,
             _LOGGER,
             name="Rhino Light",
-            config_entry=config_entry,
+            # Only attach config_entry if we have one (not for YAML)
+            **({"config_entry": config_entry} if config_entry else {}),
             update_interval=timedelta(seconds=30),
             always_update=True,
         )
         self.api: RhinoDeviceHub = my_api
-        self._current_data = None
+        self.devices = []
+        self.data = {}
 
     async def _async_setup(self):
         """Set up the coordinator.
@@ -51,16 +47,26 @@ class RhinoDeviceCoordinator(DataUpdateCoordinator):
         This method will be called automatically during
         coordinator.async_config_entry_first_refresh.
         """
-        self._current_data = await self.my_api.get_initial_data()
+        self.devices = await self.api.get_devices()
+        self.data = {d.id: d for d in self.devices}
 
-    async def _async_update_data(self):
+    async def _async_update_data(self) -> dict[str, Any]:
         """Fetch data from API endpoint."""
         try:
             async with async_timeout.timeout(10):
+                # If we haven't loaded devices yet, do so now
+                if not self.devices:
+                    self.devices = await self.api.get_devices()
+                    if not self.devices:
+                        _LOGGER.debug("No devices found during update")
+                        return {}
+
                 # Fetch data from the API
-                data = await self.api.update(current_data=self._current_data)
-                # Process data if needed
-                return data
-        except Exception as e:
-            _LOGGER.error("Error fetching data from API: %s", e)
-            raise UpdateFailed(f"Error fetching data from API: {e}") from e
+                if not self.data:
+                    return await self.api.get_initial_data()
+
+                updated_data = await self.api.update(current_data=self.data)
+                return updated_data
+        except Exception as err:
+            _LOGGER.debug("Error fetching data from API: %s", err)
+            raise UpdateFailed("Error communicating with API") from err
