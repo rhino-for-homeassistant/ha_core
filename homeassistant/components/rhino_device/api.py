@@ -8,7 +8,7 @@ from homeassistant.core import HomeAssistant
 
 
 @dataclass
-class RhinoDeviceSate:
+class RhinoDeviceState:
     """Rhino Device state."""
 
     id: str
@@ -18,7 +18,6 @@ class RhinoDeviceSate:
     # Brightness
     # RGB
     # On/off
-    
 
 
 class RhinoDeviceHub:
@@ -55,21 +54,21 @@ class RhinoDeviceHub:
         # Placeholder for authentication logic
         return True
 
-    async def get_devices(self) -> list[RhinoDeviceSate]:
+    async def get_devices(self) -> list[RhinoDeviceState]:
         """Get the device information."""
         # Placeholder for getting device information
-        sample_devices: list[RhinoDeviceSate] = [
-            RhinoDeviceSate(
+        sample_devices: list[RhinoDeviceState] = [
+            RhinoDeviceState(
                 id="light1",
                 name="Rhino Device 1",
                 online=True,
-                data={"rgb_color": "255,0,0", "brightness": 255},
+                data={"is_on": True, "rgb_color": "255,0,0", "brightness": 255},
             ),
-            RhinoDeviceSate(
+            RhinoDeviceState(
                 id="light2",
                 name="Rhino Device 2",
-                online=False,
-                data={"rgb_color": "0,255,0", "brightness": 255},
+                online=True,
+                data={"is_on": False, "rgb_color": "0,255,0", "brightness": 255},
             ),
         ]
         return sample_devices
