@@ -1,6 +1,19 @@
 """Our API for the Rhino Device interactions goes here."""
 
+from dataclasses import dataclass
+from typing import Any
+
 from homeassistant.core import HomeAssistant
+
+
+@dataclass
+class RhinoDeviceSate:
+    """Rhino Device state."""
+
+    id: str
+    name: str
+    online: bool
+    data: dict[str, Any]
 
 
 class RhinoDeviceHub:
@@ -20,10 +33,24 @@ class RhinoDeviceHub:
         # Placeholder for authentication logic
         return True
 
-    async def get_devices(self):
+    async def get_devices(self) -> list[RhinoDeviceSate]:
         """Get the device information."""
         # Placeholder for getting device information
-        return {"device": "Rhino"}
+        sample_devices: list[RhinoDeviceSate] = [
+            RhinoDeviceSate(
+                id="light1",
+                name="Rhino Device 1",
+                online=True,
+                data={"rgb_color": "255,0,0"},
+            ),
+            RhinoDeviceSate(
+                id="light2",
+                name="Rhino Device 2",
+                online=False,
+                data={"rgb_color": "0,255,0"},
+            ),
+        ]
+        return sample_devices
 
     async def get_initial_data(self):
         """Get the initial data from the device."""
