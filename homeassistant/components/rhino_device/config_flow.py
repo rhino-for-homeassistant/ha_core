@@ -5,11 +5,14 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+import aiohttp
+from light import AwesomeLight
 import voluptuous as vol
 
 from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
 from homeassistant.const import CONF_HOST, CONF_PASSWORD, CONF_USERNAME
 from homeassistant.core import HomeAssistant
+from homeassistant.data_entry_flow import FlowResult
 from homeassistant.exceptions import HomeAssistantError
 
 from .const import DOMAIN
@@ -72,6 +75,62 @@ class LocalConfigFlow(ConfigFlow, domain=DOMAIN):
     """Handle a config flow for Rhino for HomeAssistant."""
 
     VERSION = 1
+
+    async def async_step_zeroconf(
+        self, discovery_info: dict[str, Any]
+    ) -> ConfigFlowResult:
+        """Handle a device discovered via Zeroconf."""
+
+        _LOGGER.debug("Zeroconf discovery received: %s", discovery_info)
+
+        host = discovery_info["host"]
+        port = discovery_info["port"]
+        path = discovery_info["properties"].get("path", "/device")
+
+        base_url = f"http://{host}:{port}{path}"
+        status_url = f"{base_url}/status"
+
+        try:
+            async with (
+                aiohttp.ClientSession() as session,
+                session.get(status_url, timeout=5) as resp,
+            ):
+                if resp.status != 200:
+                    _LOGGER.warning(
+                        "Unexpected status response from %s: %s",
+                        status_url,
+                        resp.status,
+                    )
+                    return self.async_abort(reason="unexpected_status_code")
+
+                data = await resp.json()
+                if data.get("device_type") != "rhino":
+                    _LOGGER.debug("Device at %s is not a Rhino", status_url)
+                    return self.async_abort(reason="not_rhino")
+
+        except (TimeoutError, aiohttp.ClientError) as err:
+            _LOGGER.error(
+                "Could not connect to Rhino device at %s: %s", status_url, err
+            )
+            return self.async_abort(reason="cannot_connect")
+
+        # Optional: generate unique ID based on host/path
+        await self.async_set_unique_id(f"rhino_{host}_{path.strip('/')}")
+        self._abort_if_unique_id_configured()
+
+        return self.async_create_entry(
+            title=f"Rhino @ {host}",
+            data={"host": host, "port": port, "path": path},
+        )
+
+
+async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
+    """Set up Rhino light from YAML."""
+    host = config["host"]
+    port = config["port"]
+    path = config["path"]
+
+    async_add_entities([AwesomeLight(host, port, path)])
 
     async def async_step_user(
         self, user_input: dict[str, Any] | None = None
