@@ -1,0 +1,12 @@
+{
+    "domain": "rhino",
+    "name": "Rhino Hub",
+    "codeowners": ["Jacob Nash", "Kyle Slugg-Urbino, Eesha Jain, Carmine R"],
+    "dependencies": [],
+    "documentation": "https://www.example.com",
+    "integration_type": "hub",
+    "iot_class": "local_polling",
+    "requirements": [],
+    "single_config_entry": true,
+    "config_flow": true
+  }
