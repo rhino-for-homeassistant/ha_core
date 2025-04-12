@@ -1,5 +1,5 @@
 {
-    "domain": "rhino",
+    "domain": "rhino_device",
     "name": "Rhino Hub",
     "codeowners": ["Jacob Nash", "Kyle Slugg-Urbino, Eesha Jain, Carmine R"],
     "dependencies": [],
