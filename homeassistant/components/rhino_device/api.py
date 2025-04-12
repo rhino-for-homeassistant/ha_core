@@ -15,6 +15,10 @@ class RhinoDeviceSate:
     name: str
     online: bool
     data: dict[str, Any]
+    # Brightness
+    # RGB
+    # On/off
+    
 
 
 class RhinoDeviceHub:
