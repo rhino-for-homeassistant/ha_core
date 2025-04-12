@@ -158,8 +158,8 @@ class RhinoDeviceHub:
             self.test_data[device_id].data["brightness"] = 0
 
             return None
-        url = f"http://localhost:8000/device{device_id}/off"
-        url = "http://localhost:8021/ping"
+        # url = f"http://localhost:8000/device{device_id}/off"
+        url = "http://host.docker.internal:8021/ping"
         payload = {
             "brightness": "{brightness}",
         }
