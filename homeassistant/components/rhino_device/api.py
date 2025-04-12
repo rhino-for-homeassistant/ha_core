@@ -4,6 +4,8 @@ from dataclasses import dataclass
 import logging
 from typing import Any
 
+import aiohttp
+
 from homeassistant.core import HomeAssistant
 
 
@@ -82,3 +84,41 @@ class RhinoDeviceHub:
         """Update the device data."""
         # Placeholder for updating device data
         return current_data
+
+    async def turn_on(self, device_id, brightness):
+        url = f"http://localhost:8000/device{device_id}/on"
+        payload = {
+            "brightness": "{brightness}",
+        }
+
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(url, json=payload, timeout=5) as resp,
+        ):
+            if resp.status != 200:
+                logging.error(
+                    "Unexpected status response from %s: %s",
+                    url,
+                    resp.status,
+                )  # TODO does this logging work?
+                return self.async_abort(reason="unexpected_status_code")
+            return None
+
+    async def turn_off(self, device_id):
+        url = f"http://localhost:8000/device{device_id}/off"
+        payload = {
+            "brightness": "{brightness}",
+        }
+
+        async with (
+            aiohttp.ClientSession() as session,
+            session.post(url, json=payload, timeout=5) as resp,
+        ):
+            if resp.status != 200:
+                logging.error(
+                    "Unexpected status response from %s: %s",
+                    url,
+                    resp.status,
+                )  # TODO does this logging work?
+                return self.async_abort(reason="unexpected_status_code")
+            return None

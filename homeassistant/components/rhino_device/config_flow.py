@@ -96,7 +96,7 @@ class LocalConfigFlow(ConfigFlow, domain=DOMAIN):
         port = discovery_info["port"]
         path = discovery_info["properties"].get("path", "/device")
 
-        base_url = f"http://{host}:{port}{path}"
+        base_url = f"http://localhost:8000/{path}"
         status_url = f"{base_url}/status"
 
         try:
