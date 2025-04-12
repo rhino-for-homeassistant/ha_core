@@ -129,7 +129,7 @@ class RhinoDeviceHub:
 
             return None
 
-        url = f"http://localhost:8000/device{device_id}/on"
+        url = f"http://localhost:8021/device{device_id}/on"
         payload = {
             "brightness": "{brightness}",
         }
@@ -159,6 +159,7 @@ class RhinoDeviceHub:
 
             return None
         url = f"http://localhost:8000/device{device_id}/off"
+        url = "http://localhost:8021/ping"
         payload = {
             "brightness": "{brightness}",
         }
@@ -172,7 +173,9 @@ class RhinoDeviceHub:
                     "Unexpected status response from %s: %s",
                     url,
                     resp.status,
-                )  # TODO does this logging work?
+                )
+                text = await resp.text()
+                logging.info(text)
                 return self.async_abort(reason="unexpected_status_code")
             return None
 
