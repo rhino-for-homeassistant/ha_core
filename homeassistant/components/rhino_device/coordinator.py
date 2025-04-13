@@ -53,16 +53,16 @@ class RhinoDeviceCoordinator(DataUpdateCoordinator[dict[str, Any]]):
         """Fetch data from API endpoint."""
         try:
             async with asyncio.timeout(10):
+                # Fetch data from the API
+                if not self.data:
+                    return await self.api.get_initial_data()
+
                 # If we haven't loaded devices yet, do so now
                 if not self.devices:
                     self.devices = await self.api.get_devices()
                     if not self.devices:
                         _LOGGER.debug("No devices found during update")
                         return {}
-
-                # Fetch data from the API
-                if not self.data:
-                    return await self.api.get_initial_data()
 
                 return await self.api.update(current_data=self.data)
 

@@ -3,7 +3,12 @@
 import logging
 from typing import Any
 
-from homeassistant.components.light import ATTR_BRIGHTNESS, ColorMode, LightEntity
+from homeassistant.components.light import (
+    ATTR_BRIGHTNESS,
+    ATTR_RGB_COLOR,
+    ColorMode,
+    LightEntity,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
@@ -112,17 +117,25 @@ class RhinoLightEntity(LightEntity, CoordinatorEntity[RhinoDeviceCoordinator]):
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the light on."""
+
         brightness = kwargs.get(ATTR_BRIGHTNESS)
+        rgb_color = kwargs.get(ATTR_RGB_COLOR)
+
         if not brightness:
             brightness = self.brightness
 
         # Call API to turn on the device
-        await self.coordinator.api.turn_on(self._device_id, brightness=brightness)
+        await self.coordinator.api.turn_on(
+            self._device_id, brightness=brightness, rgb_color=rgb_color
+        )
 
         # Update entity state
         self._attr_is_on = True
         if brightness is not None:
             self._attr_brightness = brightness
+
+        if rgb_color is not None:
+            self._attr_rgb_color = rgb_color
 
         # Request refresh to confirm changes
         await self.coordinator.async_request_refresh()
@@ -149,7 +162,7 @@ class RhinoLightEntity(LightEntity, CoordinatorEntity[RhinoDeviceCoordinator]):
         # Request refresh to confirm changes
         await self.coordinator.async_request_refresh()
 
-    async def async_set_rgb_color(self, rgb_color: tuple[int, int, int]) -> None:
+    async def async_set_color(self, rgb_color: tuple[int, int, int]) -> None:
         """Set the RGB color of the light."""
         # Call API to set RGB color
         await self.coordinator.api.set_rgb_color(self._device_id, rgb_color)
